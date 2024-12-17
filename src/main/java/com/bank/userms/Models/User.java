@@ -20,6 +20,7 @@ public class User {
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long user_id;
     @Column(unique = true, nullable = false)
+
     private String username;
     @Column(unique = true, nullable = false)
     private String email;
@@ -41,6 +42,14 @@ public class User {
     @UpdateTimestamp
     @Column(name = "updated_at", nullable = false)
     private LocalDateTime updatedAt;
+    @Column(name = "address", nullable = false)
+    private String address;
+      @Column(name = "gender", nullable = false)
+      private String gender;
 
+    @Column(name = "kyc_documents", length = 500,nullable = false)
+    private String kycDocuments;
 
+    @Column(name = "kyc_comments", length = 500)
+    private String kycComments;
 }

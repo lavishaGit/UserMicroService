@@ -1,0 +1,68 @@
+#
+#services:
+#  app:
+#    build:
+#      context: .
+#      dockerfile: dockerfile
+#    ports:
+#      - "8080:8080" # Expose the app container on port 8080
+#    depends_on:
+#      - db # Ensure the app starts after the database is ready
+#
+#
+#    networks:
+#
+#      - app-network
+#
+#  db:
+#    image: mysql:latest # Use the latest MySQL image
+#
+#    ports:
+#      - "3307:3306" # Map the container's MySQL port 3306 to 3301 on the host
+#
+#    environment:
+#      SPRING_DATASOURCE_URL: jdbc:mysql://db:3306/bank_user?useSSL=false&serverTimezone=UTC
+#      SPRING_DATASOURCE_USERNAME: root
+#      SPRING_DATASOURCE_PASSWORD: root
+#    networks:
+#      - app-network
+#
+#networks:
+#  app-network:
+
+
+
+services:
+ sqldb:
+    image: mysql:latest
+    container_name: mysqldb
+    environment:
+      MYSQL_ROOT_PASSWORD: root
+      MYSQL_DATABASE: bank_user
+    ports:
+      - "3308:3306"
+    networks:
+      - app_network
+
+ app:
+    image: springbootapp
+    container_name: springbootappsql
+    build:
+      context: .
+      dockerfile: dockerfile
+    environment:
+      MYSQL_HOST:  sqldb
+      MYSQL_PORT: 3306
+      MYSQL_DB_NAME: bank_user
+      MYSQL_USER: root
+      MYSQL_PASSWORD: root
+    depends_on:
+      - sqldb
+    ports:
+      - "9091:8080"
+    networks:
+      - app_network
+
+networks:
+  app_network:
+    driver: bridge

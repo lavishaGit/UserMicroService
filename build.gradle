@@ -33,7 +33,18 @@ dependencies {
 		exclude group: 'ch.qos.logback', module: 'logback-classic'
 		exclude group: 'ch.qos.logback', module: 'logback-core'
 	}
+	//For Spring MVC and Swagger UI
+	implementation 'org.springdoc:springdoc-openapi-starter-webmvc-ui:2.1.0' // Or latest version
+
+
+
 	// Use log4j-slf4j-impl for SLF4J binding
+
+
+	implementation 'org.mapstruct:mapstruct:1.5.5.Final'
+	annotationProcessor 'org.mapstruct:mapstruct-processor:1.5.5.Final'
+
+
 	implementation 'org.springframework.boot:spring-boot-starter-log4j2'
 	implementation 'org.apache.logging.log4j:log4j-slf4j-impl:2.20.0'
 	implementation 'org.apache.logging.log4j:log4j-core:2.20.0'
@@ -44,7 +55,10 @@ dependencies {
 
 	compileOnly 'org.projectlombok:lombok'
 	developmentOnly 'org.springframework.boot:spring-boot-devtools'
-	runtimeOnly 'com.mysql:mysql-connector-j'
+//	runtimeOnly 'com.mysql:mysql-connector-j'
+
+		implementation 'com.mysql:mysql-connector-j:latest.integration'
+
 	annotationProcessor 'org.projectlombok:lombok'
 	testImplementation 'org.springframework.boot:spring-boot-starter-test'
 	testRuntimeOnly 'org.junit.platform:junit-platform-launcher'
