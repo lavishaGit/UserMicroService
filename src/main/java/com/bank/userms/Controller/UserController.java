@@ -3,13 +3,13 @@ package com.bank.userms.Controller;
 import com.bank.userms.Dto.*;
 import com.bank.userms.Models.User;
 import com.bank.userms.Services.*;
-import com.bank.userms.Services.Interfaces.AccountIntegrationService;
 import lombok.AllArgsConstructor;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
 import java.util.List;
+import java.util.Objects;
 import java.util.Optional;
 
 
@@ -19,7 +19,6 @@ import java.util.Optional;
     @AllArgsConstructor
     public class UserController {
         private final UserServiceImpl userService;
-        private final AccountIntegrationService accountIntegrationService;
 
         @GetMapping("/users")
         public ResponseEntity<List<User>> getUser() {
@@ -169,22 +168,45 @@ import java.util.Optional;
                 @RequestBody LinkAccountRequest request) {
 
             // Call the service to link the account
-            LinkAccountResponse response = accountIntegrationService.linkAccountToUser(userId, request);
+            LinkAccountResponse response =  userService.linkAccountToUser(userId, request);
 
             return ResponseEntity.status(201).body(response);
         }
         @GetMapping("/users/{userId}/accounts")
         public ResponseEntity<List<LinkAllAccountResponse>> getLinkedAccounts(@PathVariable Long userId) {
             // Call the service to get the list of linked accounts
-            List<LinkAllAccountResponse> linkedAccounts = accountIntegrationService.getLinkedAccounts(userId);
+            List<LinkAllAccountResponse> linkedAccounts = userService.getLinkedAccounts(userId);
 
             return ResponseEntity.ok(linkedAccounts);
         }
+        @GetMapping("/users/{userId}/accounts/{accountId}")
+        public ResponseEntity<LinkSpecificAccountResponse> getLinkedAccount(@PathVariable Long userId,@PathVariable Long accountId) {
+            // Call the service to get the list of linked accounts
+            LinkSpecificAccountResponse linkedAccount =  userService.getLinkedAccount(userId,accountId);
 
+            return ResponseEntity.ok(linkedAccount);
+        }
+
+    @PutMapping("users/{userId}/accounts/{accountId}")
+    public ResponseEntity<AccountUpdateResponse> updateLinkedAccount(
+            @PathVariable Long userId,
+            @PathVariable Long accountId,
+            @RequestBody AccountUpdateRequest request) {
+        AccountUpdateResponse response = userService.updateLinkedAccount(userId, accountId,request);
+        return ResponseEntity.ok(response);
     }
 
+        @DeleteMapping("users/{userId}/accounts/{accountId}")
+        public ResponseEntity<DeleteAccountResponseDto> deleteLinkedAccount(@PathVariable Long userId, @PathVariable Long accountId) {
+          DeleteAccountResponseDto message = userService.deleteLinkedAccount(userId, accountId);
 
 
+                return ResponseEntity.ok(message);
+//            } else {
+//                return ResponseEntity.status(400).body(message);
+//            }
+        }
+}
 
 //    @ExceptionHandler
 //   public ResponseEntity<?> respondWithError(Exception e) {

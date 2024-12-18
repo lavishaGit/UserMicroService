@@ -1,8 +1,6 @@
 package com.bank.userms.Services.Interfaces;
 
-import com.bank.userms.Dto.KycDto;
-import com.bank.userms.Dto.KycStatusDTO;
-import com.bank.userms.Dto.PersonalInfoDTO;
+import com.bank.userms.Dto.*;
 import com.bank.userms.Models.User;
 
 import java.util.List;
@@ -27,4 +25,10 @@ void deleteUserById(Long userId) throws Exception;
 
     // Delete KYC data for a user (but keep the user)
     void deleteKYCData(Long userId);
-}
+    LinkAccountResponse linkAccountToUser(Long userId, LinkAccountRequest request);
+    public List<LinkAllAccountResponse> getLinkedAccounts(Long userId);
+    public LinkSpecificAccountResponse getLinkedAccount(Long userId,Long accountID);
+    AccountUpdateResponse updateLinkedAccount(Long userId, Long accountId, AccountUpdateRequest request);
+    public  DeleteAccountResponseDto deleteLinkedAccount(Long userId, Long accountId);
+
+    }

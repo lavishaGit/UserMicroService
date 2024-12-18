@@ -1,8 +1,6 @@
 package com.bank.userms.Services;
 
-import com.bank.userms.Dto.KycDto;
-import com.bank.userms.Dto.KycStatusDTO;
-import com.bank.userms.Dto.PersonalInfoDTO;
+import com.bank.userms.Dto.*;
 import com.bank.userms.Mapper.KycMapper;
 import com.bank.userms.Models.User;
 import com.bank.userms.Models.UserDtoAccount;
@@ -10,26 +8,53 @@ import com.bank.userms.Repositories.UserRepository;
 import com.bank.userms.Services.Interfaces.UserService;
 import com.bank.userms.Mapper.UserMapper;
 import lombok.AllArgsConstructor;
+import lombok.NoArgsConstructor;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.beans.factory.annotation.Value;
+import org.springframework.http.HttpMethod;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.stereotype.Service;
+import org.springframework.web.client.HttpClientErrorException;
+import org.springframework.web.client.HttpServerErrorException;
 import org.springframework.web.client.RestTemplate;
 
+import java.util.ArrayList;
 import java.util.List;
 import java.util.Optional;
+import java.lang.String;
 
 /**
  *
  */
+@NoArgsConstructor(force = true)
 @Service
 @AllArgsConstructor
 public class UserServiceImpl implements UserService {
     private final RestTemplate restTemplate;
+    private final String someParameter;
+
+//    public UserServiceImpl(RestTemplate restTemplate, @Value("${account.service.url}") String someParameter, UserRepository userRepository) {
+//        this.restTemplate = restTemplate;
+//        this.someParameter = someParameter;
+//        this.userRepository = userRepository;
+//    }
+
+    // Base URL for the Account Microservice
+   @Value("${account.service.url}")
+    public String accountServiceUrl;
+
+
 
     private final UserRepository userRepository;
-    @Autowired
+
+
     private UserMapper userMapper;
+
+    public void someServiceMethod() {
+        // Example usage of the accountServiceUrl
+        System.out.println("Account service URL: " + accountServiceUrl);
+    }
     @Override
     public User addUser(User user) {
         return userRepository.save(user);
@@ -216,11 +241,108 @@ public class UserServiceImpl implements UserService {
     public boolean validateUserId(Long userId) {
         String userServiceUrl = "http://user-ms/users/" + userId;
         try {
-            ResponseEntity<UserDtoAccount> response = restTemplate.getForEntity(userServiceUrl,UserDtoAccount.class);
+            ResponseEntity<UserDtoAccount> response = restTemplate.getForEntity(userServiceUrl, UserDtoAccount.class);
             return response.getStatusCode() == HttpStatus.OK;
         } catch (Exception e) {
             return false; // User ID does not exist
 
-    }}
+        }
+
+
+    }
+
+
+    //Post call
+    @Override
+    public LinkAccountResponse linkAccountToUser(Long userId, LinkAccountRequest request) {
+        String endpointUrl = accountServiceUrl +"/account";
+
+        // Add userId to the request body
+        request.setUserId(userId);
+
+        // Make the POST call to the Account MS
+        LinkAccountResponse response = restTemplate.postForObject(endpointUrl, request, LinkAccountResponse.class);
+
+        return response;
+    }
+    //GetAllAccountofUser
+    @Override
+    public List<LinkAllAccountResponse> getLinkedAccounts(Long userId) {
+        LinkAllAccountResponse[] accountArray = restTemplate.getForObject(
+                accountServiceUrl + "/account/user/"+userId,
+                LinkAllAccountResponse[].class
+        );
+
+        List<LinkAllAccountResponse> accountList = new ArrayList<>();
+        if (accountArray != null) {
+            for (LinkAllAccountResponse account : accountArray) {
+                accountList.add(account);
+            }
+        }
+        System.out.println("Response: " + accountList.toString());
+        return accountList;
+    }
+
+    @Override
+    public LinkSpecificAccountResponse getLinkedAccount(Long userId,Long accountID) {
+        Optional<User> userOptional = userRepository.findById(userId);
+        if (userOptional.isEmpty()) {
+            throw new IllegalArgumentException("User not found for the given userId: " + userId);
+        }
+        LinkSpecificAccountResponse account = restTemplate.getForObject(
+                accountServiceUrl + "/account/"+accountID+"/users/"+userId,
+                LinkSpecificAccountResponse .class
+        );
+        return account;
+    }
+    @Override
+    public AccountUpdateResponse updateLinkedAccount(Long userId, Long accountId,AccountUpdateRequest request) {
+        // Check if user exists
+        Optional<User> userOptional = userRepository.findById(userId);
+        if (userOptional.isEmpty()) {
+            throw new IllegalArgumentException("User not found for the given userId: " + userId);
+        }
+        request.setUserId(userId);
+        request.setAccountID(accountId);
+        // Call Account-MS to updat
+        // ree the account details
+        AccountUpdateResponse responseMessage = restTemplate.postForObject(
+                accountServiceUrl +"/accounts/"+accountId,request,AccountUpdateResponse.class);
+
+
+        return responseMessage;
+    }
+    @Override
+    public DeleteAccountResponseDto deleteLinkedAccount(Long userId, Long accountId) {
+
+
+//The error you're encountering, "Parameter 1 of constructor in com.bank.userms.Services.UserServiceImpl required a bean of type 'java.lang.String' that could not be found", indicates that Spring is trying to inject a String into a constructor in your UserServiceImpl class but couldn't find it.
+//
+//This error usually happens when Spring expects a bean of a specific type (like String in this case) but doesn't know where to find it.
+//
+//Likely Cause:
+//In the UserServiceImpl class, there may be a constructor that looks like this:
+//
+//java
+//Copy code
+//public UserServiceImpl(String accountServiceUrl) {
+//    this.accountServiceUrl = accountServiceUrl;
+//}
+        //ResponseEntity<DeleteAccountResponseDto> response = restTemplate.exchange(url, HttpMethod.DELETE, null, DeleteAccountResponseDto.class);
+        try {
+            if (userRepository.existsById(userId)) {
+                restTemplate.delete(accountServiceUrl + "/accounts/" + accountId);
+                return new DeleteAccountResponseDto("Linked account deleted successfully");
+            }
+        } catch (HttpClientErrorException | HttpServerErrorException e) {
+            // handle specific HTTP error cases
+            return new DeleteAccountResponseDto("Error deleting linked account: " + e.getStatusCode());
+        } catch (Exception e) {
+            // handle other exceptions
+            return new DeleteAccountResponseDto("Error deleting linked account");
+        }
+
+        return null;
+    }
 }
 
